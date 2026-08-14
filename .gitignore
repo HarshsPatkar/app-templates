@@ -195,5 +195,6 @@ mlflow.db
 !.claude/skills/supervisor-api/
 !.claude/skills/supervisor-api-background-mode/
 !.claude/skills/managed-memory/
+!.claude/skills/load-testing/
 !.claude/AGENTS.md
 !.claude/CLAUDE.md
