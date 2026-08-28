@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 from dash import Dash, dcc, html
 import plotly.express as px
@@ -17,7 +19,6 @@ CATALOG = "hello_smart_test"
 SCHEMA = "activity"
 TABLE = "app_activity"
 
-# Replace this with your SQL Warehouse HTTP path
 HTTP_PATH = "/sql/1.0/warehouses/c5dc2f05534d53d3"
 
 
@@ -26,8 +27,6 @@ HTTP_PATH = "/sql/1.0/warehouses/c5dc2f05534d53d3"
 # --------------------------------------------------
 
 w = WorkspaceClient()
-
-import time
 
 last_recorded = 0
 ACTIVITY_INTERVAL_SECONDS = 60
@@ -38,7 +37,7 @@ def record_activity():
 
     now = time.time()
 
-    # Don't write to SQL more than once per minute
+    # Only record activity once every 60 seconds
     if now - last_recorded < ACTIVITY_INTERVAL_SECONDS:
         return
 
@@ -68,9 +67,24 @@ def record_activity():
         conn.close()
 
 
+# --------------------------------------------------
+# Dash App
+# --------------------------------------------------
+
+dash_app = Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP]
+)
+
+
+# --------------------------------------------------
+# Track App requests
+# --------------------------------------------------
+
 @dash_app.server.before_request
 def track_activity():
     record_activity()
+
 
 # --------------------------------------------------
 # Existing sample data
@@ -83,7 +97,7 @@ chart_data = pd.DataFrame({
 
 
 # --------------------------------------------------
-# Existing App layout
+# Existing layout
 # --------------------------------------------------
 
 dash_app.layout = dbc.Container([
