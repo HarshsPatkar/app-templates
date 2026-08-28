@@ -27,9 +27,20 @@ HTTP_PATH = "/sql/1.0/warehouses/c5dc2f05534d53d3"
 
 w = WorkspaceClient()
 
+import time
+
+last_recorded = 0
+ACTIVITY_INTERVAL_SECONDS = 60
+
 
 def record_activity():
-    """Record the latest App activity."""
+    global last_recorded
+
+    now = time.time()
+
+    # Don't write to SQL more than once per minute
+    if now - last_recorded < ACTIVITY_INTERVAL_SECONDS:
+        return
 
     conn = sql.connect(
         server_hostname=w.config.host,
@@ -40,14 +51,15 @@ def record_activity():
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                f"""
-                UPDATE {CATALOG}.{SCHEMA}.{TABLE}
+                """
+                UPDATE hello_smart_test.activity.app_activity
                 SET last_activity = current_timestamp()
-                WHERE app_name = '{APP_NAME}'
+                WHERE app_name = 'hello-smart'
                 """
             )
 
-        print("Activity recorded successfully")
+        last_recorded = now
+        print("Activity recorded")
 
     except Exception as e:
         print(f"Failed to record activity: {e}")
@@ -56,24 +68,9 @@ def record_activity():
         conn.close()
 
 
-# --------------------------------------------------
-# Dash App
-# --------------------------------------------------
-
-dash_app = Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP]
-)
-
-
-# --------------------------------------------------
-# Record activity whenever App receives a request
-# --------------------------------------------------
-
 @dash_app.server.before_request
 def track_activity():
     record_activity()
-
 
 # --------------------------------------------------
 # Existing sample data
